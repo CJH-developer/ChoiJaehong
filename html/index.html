@@ -1,0 +1,177 @@
+<?php
+	#db연결
+	$hostname = 'localhost'; 
+	$username = 'master1';
+	$passwd = 'html1';
+	$dbname = 'smat';
+	$connect = mysql_connect($hostname, $username, $passwd) or die("Failed");
+	if(!$connect){ 
+		alert("connection err"); #연결실패시 알람
+	} 
+	$result = mysql_select_db($dbname, $connect); #데이터베이스 선택
+	$query = "select * from date ORDER BY `date`.`date` DESC"; #날짜선택 sql
+	$rs = mysql_query($query); #sql결과 저장
+	$query1 = "select * from data where date = '".$_POST['iptDot']."'";#리스트박스 채우기용
+	$rs1 = mysql_query($query1);
+	$rs2 = mysql_query($query1);
+	$rs3 = mysql_query($query1);
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+	 <title>NAVER</title>
+	 <style>
+			h1{text-align:center; text-shadow:5px 5px 5px; font-size:40pt;}
+	 </style>
+<meta name="viewport" content="width=device-width">
+</head>
+<body>
+    <table border="1" style="width:500px; height:500px;">
+		<!--날짜선택-->
+		<form method="POST" action="index.html">
+			<select name="iptDot" id="iptDot">
+				<option value="">select time</option>
+				<?
+				while($row = mysql_fetch_array($rs)){
+				?>
+					<option value=<?echo $row[date]?>><?echo $row[date]?></option>
+				<?
+				}
+				?>
+			</select>
+			<input type="submit" value="selectday"/>
+		</form>
+        <tr>
+            <td>
+                <canvas id="can1" width="800" height="700" 
+                    style="background-color:white;cursor:crosshair;">
+                </canvas>
+				<!--자바스크립스 사용-->
+				<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+                <script type="text/javascript">
+                    var canvas = document.getElementById("can1");
+                    var cv = canvas.getContext("2d");
+                    var event_Chk;
+                    var x, y;
+ 
+                    var state_Coloe = "rgb(0, 0, 0)";
+                    var eraser = false;
+ 
+                    function fn_Clear() {
+                        cv.clearRect(0, 0, canvas.width, canvas.height);
+                    };
+
+                    function fn_TEST(x,y) {
+						cv.lineWidth = 3;
+						
+                        cv.beginPath();
+
+                        cv.moveTo(x, y);
+                        cv.stroke();
+                       
+                        cv.lineTo(x+1, y+1);
+                        cv.stroke();
+						
+						cv.moveTo(x+2, y+2);
+                        cv.stroke();
+
+                        cv.closePath();
+						
+						cv.lineWidth = 1;
+                    };
+					function fn_play(){
+						var a = $("#iptlisttime option:selected").prevAll().size();
+						var x = $("#iptlistx option").eq(a).val();
+						var y = $("#iptlisty option").eq(a).val();
+						var i = 1;
+						while(i <= a){
+							x = $("#iptlistx option").eq(i).val()*1+100;
+							y = $("#iptlisty option").eq(i).val()*1+100;
+							fn_TEST(x,y)
+							i++;
+						}
+					}
+ 
+                    canvas.addEventListener('mousedown', function (event) {
+                        event_Chk = true;
+ 
+                        var rect = canvas.getBoundingClientRect();
+ 
+                        x = event.clientX - rect.left;
+                        y = event.clientY - rect.top;
+ 
+                        cv.beginPath();
+                        cv.moveTo(x, y);
+                        cv.strokeStyle = state_Coloe;
+                    }, false);
+ 
+                    canvas.addEventListener('mousemove', function (event) {
+ 
+                        if (event_Chk == true) {
+                            var rect = canvas.getBoundingClientRect();
+ 
+                            x = event.clientX - rect.left;
+                            y = event.clientY - rect.top;
+ 
+                            cv.lineTo(x, y);
+                            cv.stroke();
+                        }
+                    }, false);
+ 
+                    canvas.onmouseup = function () {
+                        cv.closePath();
+                        event_Chk = false;
+                    };
+                </script>
+            </td>
+			<td>
+				<span style ="margin:10px; padding:12px; font-weight:bold;">TIME<span>
+				<select name="iptlisttime" size=40 id="iptlisttime">
+					<option value="">Select Sec</option>
+					<?
+					while($row1 = mysql_fetch_array($rs1)){
+					?>
+						<option value=<?echo $row1[time]?>><?echo $row1[time]?></option>
+					<?
+					}
+					?>
+				</select>
+			</td>
+			<td>
+				<span style ="margin:10px; padding:12px; font-weight:bold;">X<span>
+				<select name="iptlistx" size=40 id="iptlistx">
+					<option value="">saved X</option>
+					<?
+					while($row2 = mysql_fetch_array($rs2)){
+					?>
+						<option value=<?echo $row2[x]?>><?echo $row2[x]?></option>
+					<?
+					}
+					?>
+				</select>
+			</td>
+			<td>
+				<span style ="margin:10px; padding:12px; font-weight:bold;">Y<span>
+				<select name="iptlisty" size=40 id="iptlisty">
+					<option value="">saved Y</option>
+					<?
+					while($row3 = mysql_fetch_array($rs3)){
+					?>
+						<option value=<?echo $row3[y]?>><?echo $row3[y]?></option>
+					<?
+					}
+					?>
+				</select>
+			</td>
+		</tr>
+        <tr>
+            <td clospan = "2" style="cursor:pointer;" onclick="fn_Clear();">REMOVE</td>    
+			<td><input type="button" name="btn1" id="btn1" value="select time" onclick="fn_play()"/></td>
+		</tr>
+	</table>
+</body>
+</html>
+
+
+

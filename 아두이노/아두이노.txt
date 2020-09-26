@@ -1,0 +1,65 @@
+
+#include<Wire.h>
+#include <SoftwareSerial.h>
+
+SoftwareSerial BTSerial(2,3);
+const int MPU = 0x68;  // I2C address of the MPU-6050
+int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+String acx, acy, acz, tmp, gyx, gyy, gyz;
+
+
+// 프로그램 시작 - 초기화 작업
+void setup()
+{
+   Serial.begin(9600);     // 시리얼 통신 초기화
+   BTSerial.begin(9600);
+   //Serial.println("Arduino Examples - GY-521 Gyro& Accelator (MPU-6050) Module");
+   //Serial.println("    http://docs.whiteat.com/?p=2662");
+
+
+   Wire.begin();
+   Wire.beginTransmission(MPU);
+   Wire.write(0x6B);  // PWR_MGMT_1 register
+   Wire.write(0);     // set to zero (wakes up the MPU-6050)
+   Wire.endTransmission(true);
+
+   // gyro scale  
+   Wire.beginTransmission(MPU);
+   Wire.write(0x1B);  // 
+   Wire.write(0xF8);     // 
+   Wire.endTransmission(true);
+
+   // acc scale
+   Wire.beginTransmission(MPU);
+   Wire.write(0x1C);  // 
+   Wire.write(0xF8);     // 
+   Wire.endTransmission(true);
+
+   pinMode(8,INPUT_PULLUP);
+}
+
+void loop()
+{
+   Wire.beginTransmission(MPU);
+   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
+   Wire.endTransmission(false);
+   Wire.requestFrom(MPU, 14, true);  // request a total of 14 registers
+   AcX = Wire.read() << 8 | Wire.read();  // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)    
+   AcY = Wire.read() << 8 | Wire.read();  // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+   AcZ = Wire.read() << 8 | Wire.read();  // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
+   Tmp = Wire.read() << 8 | Wire.read();  // 0x41 (TEMP_OUT_H) & 0x42 (TEMP_OUT_L)
+   GyX = Wire.read() << 8 | Wire.read();  // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
+   GyY = Wire.read() << 8 | Wire.read();  // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
+   GyZ = Wire.read() << 8 | Wire.read();  // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+  
+   acx = String((AcX-1030)/10);
+   acy = String((AcY-950)/10);
+   acz = String((AcZ-3230)/10);
+   tmp = String(Tmp);
+   gyx = String((GyX-760)/10);
+   gyy = String((GyY+790)/10);
+   gyz = String((GyZ-1090)/10);
+   
+   if(digitalRead(8) == LOW){BTSerial.println("1,"+acx+","+acy+","+acz+","+gyx+","+gyy+","+gyz+",1");}
+   else{BTSerial.println("0,"+acx+","+acy+","+acz+","+gyx+","+gyy+","+gyz+",1");}
+}
